@@ -20,7 +20,13 @@ enum sofle_layers {
 };
 
 enum custom_keycodes {
-    KC_= SAFE_RANGE,
+    KC_EPIPE = SAFE_RANGE,
+    KC_VIMQ,
+    KC_VIMW,
+    KC_VIME,
+    KC_VIMS,
+    KC_VCPY,
+    KC_,
 };
 
 
@@ -258,9 +264,42 @@ bool oled_task_user(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case QK_MACRO_0: {
+        case KC_EPIPE: {
             if (record->event.pressed) {
                 SEND_STRING("|>");
+                return false;
+            }
+        } break;
+        case KC_VIMQ: {
+            if (record->event.pressed) {
+                tap_code16(KC_ESC);
+                SEND_STRING(":q");
+                return false;
+            }
+        } break;
+        case KC_VIMW: {
+            if (record->event.pressed) {
+                tap_code16(KC_ESC);
+                SEND_STRING(":w");
+                return false;
+            }
+        } break;
+        case KC_VIME: {
+            if (record->event.pressed) {
+                tap_code16(KC_ESC);
+                SEND_STRING(":e");
+                return false;
+            }
+        } break;
+        case KC_VIMS: {
+            if (record->event.pressed) {
+                SEND_STRING(":s/");
+                return false;
+            }
+        } break;
+        case KC_VCPY: {
+            if (record->event.pressed) {
+                SEND_STRING("\"+y");
                 return false;
             }
         } break;
