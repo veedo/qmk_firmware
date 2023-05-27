@@ -1,8 +1,15 @@
+#include "action.h"
+#include "keyboard.h"
+#include "keycodes.h"
+#include "keymap_us.h"
 #include "oled_driver.h"
+#include "quantum.h"
 #include "timer.h"
 #include QMK_KEYBOARD_H
 #include <stdbool.h>
 #include <stdint.h>
+
+#define OLED_TIMEOUT_OFF ((uint32_t)5*60*1000)
 
 enum sofle_layers {
     LAYER_BASE = 0,
@@ -233,6 +240,12 @@ oled_rotation_t oled_init_user(oled_rotation_t rotation) {
 }
 
 bool oled_task_user(void) {
+    if ((last_input_activity_elapsed() > OLED_TIMEOUT_OFF)) {
+        if (is_oled_on()) {
+            oled_off();
+        }
+        return false;
+    }
     if (is_keyboard_master()) {
         print_status_narrow();
     } else {
