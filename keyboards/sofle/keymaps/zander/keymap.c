@@ -79,7 +79,7 @@ _______,KC_EXLM,KC_AT,KC_HASH,KC_DLR,KC_PERC,KC_MPRV,  KC_MNXT,KC_CIRC,KC_AMPR,K
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
  * |  ▽  | :q  | :w  | :e  |MENU |PRNTS|                  | PGU |Home |  ⬆  | End |     |  ▽  |
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
- * |  ▽  |     | :s/ |CT BS|     |     |-------.  ,-------| PGD |  ←  |  ↓  |  →  |     |  ▽  |
+ * |  ▽  |     | :s/ |  {  |  }  |  %  |-------.  ,-------| PGD |  ←  |  ↓  |  →  |     |  ▽  |
  * |-----+-----+-----+-----+--=--+-----|  ▽    |  |    ▽  |-----+--=--+-----+-----+-----+-----|
  * |  ▽  |     |     |VCOPY|     |     |-------|  |-------|     |CTHom|     |CTEnd| Ins |  ▽  |
  * `-----------------------------------/       /   \      \-----------------------------------'
@@ -88,9 +88,9 @@ _______,KC_EXLM,KC_AT,KC_HASH,KC_DLR,KC_PERC,KC_MPRV,  KC_MNXT,KC_CIRC,KC_AMPR,K
  *          `-------------------------------'         '------'-----------------------'
  */
 [LAYER_ARROWS] = LAYOUT(
-KC_PSCR,_______,_______,_______,_______,_______,                _______,_______,_______,_______,_______,_______,
+KC_PSCR,KC_F1,KC_F2,KC_F3,KC_F4,KC_F5,                          KC_F6,KC_F7,KC_F8,KC_F9,KC_F10,KC_F11, 
 _______,KC_VIMQ,KC_VIMW,KC_VIME,KC_APP,KC_PSCR,                 KC_PGUP,KC_HOME,KC_UP,KC_END,KC_NO,_______,
-_______,KC_NO,KC_VIMS,LCTL(KC_BSPC),XXXXXXX,KC_NO,            KC_PGDN,KC_LEFT,KC_DOWN,KC_RGHT,KC_NO,_______,
+_______,KC_NO,KC_VIMS,KC_LCBR,KC_RCBR,KC_PERC,            KC_PGDN,KC_LEFT,KC_DOWN,KC_RGHT,KC_NO,KC_F12,
 _______,XXXXXXX,XXXXXXX,KC_VCPY,XXXXXXX,KC_NO,_______,   _______,KC_NO,LCTL(KC_HOME),KC_NO,LCTL(KC_END),KC_INS,_______,
              _______,_______,_______,_______,_______,   _______,_______,_______,_______,_______),
 /* MATH 3
