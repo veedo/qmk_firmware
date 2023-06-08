@@ -183,14 +183,44 @@ static void render_squid(uint8_t frame) {
     oled_write_raw_P((const char *)(raw_logo[frame]), SQUID_SIZE);
 }
 
+#define SQUID_TYPING_SIZE (32*24/8)
+
+enum {
+    SQUID_TYPING_PAUSE_1 = 0,
+    SQUID_TYPING_PAUSE_2,
+    SQUID_TYPING_PAUSE_3,
+    SQUID_TYPING_PAUSE_FRAMES
+};
+
+enum {
+    SQUID_TYPING_1 = 0,
+    SQUID_TYPING_2,
+    SQUID_TYPING_3,
+    SQUID_TYPING_4,
+
+    SQUID_TYPING_FRAMES
+};
+
+static const uint8_t PROGMEM frames_squid_typing_long_pause[SQUID_TYPING_SIZE] = {0,  0,  0,  0,  0,  0,  0,  0,192, 48,  8,  4,194,226,225,193,  1,  1,193,225,226,194,  4,  8, 48,192,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,159, 96,130,  0,  1, 10,146,145,144,144,145, 18, 10,  1,128,130, 96,159,128,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 24, 38, 33, 24, 38, 65, 64, 56, 70,129,152,103, 32, 65, 46, 16, 32, 64, 67, 36, 24, 32, 19, 12,  0,  0,  0};
+static const uint8_t PROGMEM frames_squid_typing_pause[SQUID_TYPING_PAUSE_FRAMES][SQUID_TYPING_SIZE] = {
+    [SQUID_TYPING_PAUSE_1] = {0,  0,  0,  0,  0,  0,  0,  0,192, 48,  8,  4,194,226,225,193,  1,  1,193,225,226,194,  4,  8, 48,192,  0,  0,  0,  0,  0,  0,  0,  0,  0,128, 64, 32, 32, 16,223, 32, 18, 16, 33,194, 26,145,144,144,145, 26,194, 33, 16, 18, 32,223, 16, 32, 32, 64,128,  0,  0,  0,  7,  8,  8,  4,  2,  3,  4,  8,  8,  8,  4, 27, 33, 33, 30, 16, 16,  9,  7,  8,  8,  8,  4,  3,  1,  2,  4,  8,  8,  7},
+    [SQUID_TYPING_PAUSE_2] = {0,  0,  0,  0,  0,  0,  0,  0,192, 48,  8,  4,194,226,225,193,  1,  1,193,225,226,194,  4,  8, 48,192,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,128, 64, 64, 32,223, 32, 18, 16, 33,202, 18,145,144,144,145, 18,202, 33, 16, 18, 32,223, 32, 32, 64,128,  0,  0,  0,  0, 14, 17, 16,  8,  4,  3,  4,  8,  8,  8,  4,  3, 13, 16, 17, 14, 16, 17, 23,  8,  8,  8,  4,  3,  1,  6,  8, 16, 17, 14},
+    [SQUID_TYPING_PAUSE_3] = {0,  0,  0,  0,  0,  0,  0,  0,192, 48,  8,  4,130,130,129,129,  1,  1,129,129,130,130,  4,  8, 48,192,  0,  0,  0,  0,  0,  0,  0,  0,  0,128, 64, 32, 32, 16,223, 32, 17, 16, 32,196,  8,136,136,136,136,  8,196, 32, 16, 17, 32,223, 16, 32, 32, 64,128,  0,  0,  0,  7,  8,  8,  4,  2,  3,  4,  8,  8,  8,  4, 27, 33, 33, 30, 16, 16,  9,  7,  8,  8,  8,  4,  3,  1,  2,  4,  8,  8,  7},
+};
+static const uint8_t PROGMEM frames_squid_typing[SQUID_TYPING_FRAMES][SQUID_TYPING_SIZE] = {
+    [SQUID_TYPING_1] = {0,  0,  0,  0,  0,  0,  0,  0,128, 96, 24,  4,194,226,225,193,  1,  1,193,225,226,194,  4,  8, 48,192,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,128, 64, 32,208, 63,  0,  4,  0,  1, 10, 18,145,144,144,145, 18,202, 33, 16, 18, 32,223, 32, 32, 64,128,  0,  0,  0,  0, 14, 17, 16,  8,  6,  1,  6, 56,192,128,248,  6, 13, 16, 17, 14, 16, 17, 23,  8,  8,  8,  4,  3,  1,  6,  8, 16, 17, 14},
+    [SQUID_TYPING_2] = {0,  0,  0,  0,  0,  0,  0,  0,192, 48,  8,  4,194,226,225,193,  1,  1,193,225,226,194,  4, 24, 96,128,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,128, 64, 64, 32,223, 32, 18, 16, 33,202, 18,145,144,144,145, 18, 10,  1,  0,  4,  0, 31,224, 32, 64,128,  0,  0,  0,  0, 14, 17, 16,  8,  4,  3,  4,  8,  8,  8,  4,  3, 13, 16, 17, 14, 16, 17,126,128,128, 96, 24,  6,  1,  6,  8, 16, 17, 14},
+    [SQUID_TYPING_3] = {0,  0,  0,  0,  0,  0,  0,  0,  0,224, 24,  4,194,226,225,193,  1,  1,193,225,226,194,  4,  8, 48,192,  0,  0,  0,  0,  0,  0,  0,  0,128, 64, 32, 32, 16,208, 63,  0,  4,  0,  1, 10, 18,145,144,144,145, 26,194, 33, 16, 18, 32,223, 16, 32, 64,128,  0,  0,  0,  0,  7,  8,  8,  6,  1,  3, 60,192,128,120, 12, 18, 33, 33, 30, 16, 16,  9,  7,  8,  8,  4,  2,  1,  2,  4,  8,  8,  7,  0},
+    [SQUID_TYPING_4] = {0,  0,  0,  0,  0,  0,  0,  0,192, 48,  8,  4,194,226,225,193,  1,  1,193,225,226,194,  4,  8, 48,192,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,128, 64, 32, 32,223, 32, 18, 16, 33,194, 26,145,144,144, 17, 18, 10,  1,  0,  4,128,127, 16, 16, 32, 32, 64,128,  0,  0,  0, 15, 16, 16, 12,  3,  4,  8,  8,  8,  4, 27, 33, 33, 30, 16, 17, 14,240,128, 64, 56,  7,  1,  1,  1,  6,  8,  8,  7},
+};
+
+static uint32_t animation_timer = 0;
 static void render_squid_idle(void){
-    static uint32_t animation_timer = 0;
     static uint8_t idleframe = 0;
     static uint8_t prev_idleframe = 0;
 
     if ((prev_idleframe == SQUID_PASSIVE_1) || (prev_idleframe == SQUID_PASSIVE_6) || (prev_idleframe == SQUID_PASSIVE_12)) {
         if (timer_elapsed32(animation_timer) > (5*ANIM_FRAME_TIME)) {
-            oled_set_cursor(0, 0);
             animation_timer = timer_read32();
             render_squid(idleframe);
             prev_idleframe = idleframe;
@@ -198,13 +228,72 @@ static void render_squid_idle(void){
         }
     } else {
         if (timer_elapsed32(animation_timer) > ANIM_FRAME_TIME) {
-           oled_set_cursor(0, 0);
            animation_timer = timer_read32();
            render_squid(idleframe);
            prev_idleframe = idleframe;
            idleframe = (idleframe + 1) % 16;
         }
     }
+}
+
+static uint16_t typing_frame = 0;
+static uint32_t active_timer = 0;
+static uint32_t time_offset = 0;
+static void squid_typing_typechar(uint16_t keycode){
+    typing_frame = (typing_frame + timer_read() + keycode + 1) % SQUID_TYPING_FRAMES;
+}
+
+static uint8_t squid_typing_pause(void){
+#if defined(__AVR_ATmega32U4__)
+    return (TCNT0 + TCNT1 + TCNT3 + TCNT4) % SQUID_TYPING_PAUSE_FRAMES;
+#else
+    return rand() % SQUID_TYPING_PAUSE_FRAMES;
+#endif
+}
+
+static void render_squid_keyboard(void) {
+    static const unsigned char PROGMEM raw_logo[] = {
+        145, 95,113,203,149,171,149,171,149,171,149,171,149,169,147,141,177,203,149,171,149,171,149,171,149,171,149,169,147,142,184,224,
+    };
+    oled_set_cursor(0, 4);
+    oled_write_raw_P((const char *)(raw_logo), sizeof(raw_logo));
+}
+
+#define SQUID_TYPING_DELAY_IDLE (3500)
+#define SQUID_TYPING_DELAY_LONG_PAUSE (3000)
+#define SQUID_TYPING_DELAY_PAUSE (100)
+#define SQUID_TYPING_DELAY_ANIM (13)
+static void render_squid_typing(void){
+    render_squid_keyboard();
+    oled_set_cursor(0, 0);
+    uint32_t lastactivityelapsed = timer_elapsed32(active_timer);
+    if ((lastactivityelapsed > SQUID_TYPING_DELAY_IDLE)) {
+        render_squid_idle();
+        return;
+    }
+    if ((lastactivityelapsed > SQUID_TYPING_DELAY_LONG_PAUSE)) {
+        if (timer_elapsed32(animation_timer) > SQUID_TYPING_DELAY_ANIM) {
+            animation_timer = timer_read32();
+            oled_write_P(PSTR("     "), false);
+            oled_write_raw_P((const char *)(frames_squid_typing_long_pause), SQUID_TYPING_SIZE);
+        }
+        return;
+    }
+    if ((lastactivityelapsed > SQUID_TYPING_DELAY_PAUSE)) {
+        if ( timer_elapsed32(animation_timer) <= SQUID_TYPING_DELAY_PAUSE) return;
+        if ((lastactivityelapsed < 3 * SQUID_TYPING_DELAY_PAUSE) || (timer_elapsed32(animation_timer) > 3 * SQUID_TYPING_DELAY_PAUSE)) {
+            animation_timer = timer_read32();
+            oled_write_P(PSTR("     "), false);
+            oled_write_raw_P((const char *)(frames_squid_typing_pause[squid_typing_pause()]), SQUID_TYPING_SIZE);
+        }
+        return;
+    }
+    if (timer_elapsed32(animation_timer) > SQUID_TYPING_DELAY_ANIM) {
+        animation_timer = timer_read32();
+        oled_write_P(PSTR("     "), false);
+        oled_write_raw_P((const char *)(frames_squid_typing[typing_frame]), SQUID_TYPING_SIZE);
+    }
+    return;
 }
 
 static void print_status_narrow(void) {
@@ -231,8 +320,6 @@ static void print_status_narrow(void) {
             oled_write_P(PSTR("Undef"), false);
     }
     oled_write_P(PSTR("\n\n"), false);
-    led_t led_usb_state = host_keyboard_led_state();
-    oled_write_ln_P(PSTR("CPSLK"), led_usb_state.caps_lock);
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
@@ -255,7 +342,7 @@ bool oled_task_user(void) {
     if (is_keyboard_master()) {
         print_status_narrow();
     } else {
-        render_squid_idle();
+        render_squid_typing();
     }
     return false;
 }
