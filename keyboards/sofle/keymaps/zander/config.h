@@ -7,4 +7,5 @@ for more options.
 //#define NO_DEBUG
 //#define NO_PRINT
 #define NO_ACTION_ONESHOT
+#define SPLIT_TRANSACTION_IDS_USER USER_SYNC_A, USER_SYNC_B, USER_SYNC_C
 

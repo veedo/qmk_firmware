@@ -8,6 +8,7 @@
 #include QMK_KEYBOARD_H
 #include <stdbool.h>
 #include <stdint.h>
+#include "transactions.h"
 
 #define OLED_TIMEOUT_OFF ((uint32_t)5*60*1000)
 
@@ -353,7 +354,57 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return update_tri_layer_state(state, LAYER_LOWER, LAYER_ARROWS, LAYER_MATH);
 }
 
+void user_sync_a_slave_handler(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
+    typing_frame = *((uint16_t*)in_data);
+}
+
+void user_sync_b_slave_handler(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
+    active_timer = *((uint32_t*)in_data) + time_offset;
+}
+
+static uint32_t mastertime = 0;
+void user_sync_c_slave_handler(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
+    mastertime = *((uint32_t*)in_data);
+    time_offset = timer_read32() - mastertime;
+}
+
+static uint16_t last_sent_frame = 0;
+static uint32_t last_sent_active = 0;
+static uint32_t last_sent_mastertime = -60000;
+void housekeeping_task_user(void) {
+    if (!is_keyboard_master()) return;
+
+    if (last_sent_frame != typing_frame) {
+        if (transaction_rpc_send(USER_SYNC_A, sizeof(typing_frame), &typing_frame)) {
+            last_sent_frame = typing_frame;
+        }
+    }
+
+    if (last_sent_active != active_timer) {
+        if (transaction_rpc_send(USER_SYNC_B, sizeof(active_timer), &active_timer)) {
+            last_sent_active = active_timer;
+        }
+    }
+
+    if (timer_elapsed32(last_sent_mastertime) > 60000) {
+        mastertime = timer_read32();
+        if (transaction_rpc_send(USER_SYNC_C, sizeof(mastertime), &mastertime)) {
+            last_sent_mastertime = timer_read32();
+        }
+    }
+}
+
+void keyboard_post_init_user(void) {
+    transaction_register_rpc(USER_SYNC_A, user_sync_a_slave_handler);
+    transaction_register_rpc(USER_SYNC_B, user_sync_b_slave_handler);
+    transaction_register_rpc(USER_SYNC_C, user_sync_c_slave_handler);
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (record->event.pressed) {
+        squid_typing_typechar(keycode);
+        active_timer = timer_read32();
+    }
     switch (keycode) {
         case KC_EPIPE: {
             if (record->event.pressed) {
