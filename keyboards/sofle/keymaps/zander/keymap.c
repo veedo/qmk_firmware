@@ -34,7 +34,8 @@ enum custom_keycodes {
     KC_RARR,
     KC_LBIN,
     KC_RBIN,
-    KC_SWAP,
+    KC_LAEQ,
+    KC_RAEQ,
 };
 
 
@@ -85,11 +86,11 @@ _______,_______,_______,_______,_______,_______,QK_BOOT,  KC_MNXT,_______,______
  * ,-----------------------------------.                  ,-----------------------------------.
  * |PRNTS|  ▽  |  ▽  |  ▽  |  ▽  |  ▽  |                  |  ▽  |  ▽  |  ▽  |  ▽  |  ▽  |  ▽  |
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
- * |  ▽  | :q  | :w  | :e  |MENU |PRNTS|                  | PGU |Home |  ⬆  | End |     |  ▽  |
+ * |  ▽  | :q  | :w  | :e  |MENU |PRNTS|                  | PGU |Home |  ⬆  | End | Ins |  ▽  |
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
  * |  ▽  |     | :s/ |  {  |  }  |  %  |-------.  ,-------| PGD |  ←  |  ↓  |  →  |     |  ▽  |
  * |-----+-----+-----+-----+--=--+-----|  PREV |  | NEXT  |-----+--=--+-----+-----+-----+-----|
- * |  ▽  |     |     |VCOPY| CR" |     |-------|  |-------|     |CTHom| <<  |  >> | Ins |  ▽  |
+ * |  ▽  |     |     |VCOPY| CR" |     |-------|  |-------|     | <=  | <<  |  >> |  => |  ▽  |
  * `-----------------------------------/       /   \      \-----------------------------------'
  *          |  ▽  |  ▽  |  ▽  |  ▽  | /   ▽   /     \  ▽   \ |  ▽  |  ▽  |  ▽  |  ▽  |
  *          |     |     |     |     |/       /       \      \|     |     |     |     |
@@ -97,9 +98,9 @@ _______,_______,_______,_______,_______,_______,QK_BOOT,  KC_MNXT,_______,______
  */
 [LAYER_ARROWS] = LAYOUT(
 KC_PSCR,KC_F1,KC_F2,KC_F3,KC_F4,KC_F5,                          KC_F6,KC_F7,KC_F8,KC_F9,KC_F10,KC_F11,
-_______,KC_VIMQ,KC_VIMW,KC_VIME,KC_APP,KC_PSCR,                 KC_PGUP,KC_HOME,KC_UP,KC_END,KC_NO,_______,
+_______,KC_VIMQ,KC_VIMW,KC_VIME,KC_APP,KC_PSCR,                 KC_PGUP,KC_HOME,KC_UP,KC_END,KC_INS,_______,
 _______,KC_NO,KC_VIMS,KC_LCBR,KC_RCBR,KC_PERC,            KC_PGDN,KC_LEFT,KC_DOWN,KC_RGHT,KC_NO,KC_F12,
-_______,_______,_______,KC_VCPY,KC_VIMV,KC_NO,KC_MPRV,   KC_MNXT,KC_NO,LCTL(KC_HOME),KC_LBIN,KC_RBIN,KC_INS,_______,
+_______,_______,_______,KC_VCPY,KC_VIMV,KC_NO,KC_MPRV,   KC_MNXT,KC_NO,KC_LAEQ,KC_LBIN,KC_RBIN,KC_RAEQ,_______,
              _______,_______,_______,_______,_______,   _______,_______,_______,_______,_______),
 /* MATH 3
  * ,-----------------------------------.                  ,-----------------------------------.
@@ -512,10 +513,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 return false;
             }
         } break;
-        case KC_SWAP: {
+        case KC_LAEQ: {
             if (record->event.pressed) {
-                is_left = !is_left;
-                is_left_configured = true;
+                SEND_STRING("<=");
+                return false;
+            }
+        } break;
+        case KC_RAEQ: {
+            if (record->event.pressed) {
+                SEND_STRING("=>");
                 return false;
             }
         } break;
