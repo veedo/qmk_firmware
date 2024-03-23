@@ -128,7 +128,7 @@ MO(4),KC_PERC,KC_CIRC,KC_LCBR,KC_RCBR,KC_PIPE,_______,  _______,KC_NO,KC_P1,KC_P
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
  * |Debug|     |     |     |     |     |                  |     |     |     |     |     |     |
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
- * |Swap |     |     |     |     |     |-------.  ,-------|     |     |     |     |     |     |
+ * |     |     |     |     |     |     |-------.  ,-------|     |     |     |     |     |     |
  * |-----+-----+-----+-----+-----+-----|       |  |       |-----+-----+-----+-----+-----+-----|
  * |  ▽  |     |     |     |     |     |-------|  |-------|     |     |     |     |     |     |
  * `-----------------------------------/       /   \      \-----------------------------------'
@@ -139,7 +139,7 @@ MO(4),KC_PERC,KC_CIRC,KC_LCBR,KC_RCBR,KC_PIPE,_______,  _______,KC_NO,KC_P1,KC_P
 [LAYER_PROG] = LAYOUT(
 QK_BOOT,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
 DB_TOGG,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
-KC_SWAP,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
+ KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
 _______,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,  KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
               KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,  KC_NO,KC_NO,KC_NO,KC_NO,KC_NO)
 };
