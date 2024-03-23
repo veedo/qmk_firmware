@@ -1,4 +1,5 @@
 #include "action.h"
+#include "gpio.h"
 #include "keyboard.h"
 #include "keycodes.h"
 #include "keymap_us.h"
@@ -9,6 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "transactions.h"
+#include "sofle.h"
 
 #define OLED_TIMEOUT_OFF ((uint32_t)5*60*1000)
 
@@ -32,6 +34,7 @@ enum custom_keycodes {
     KC_RARR,
     KC_LBIN,
     KC_RBIN,
+    KC_SWAP,
 };
 
 
@@ -65,7 +68,7 @@ KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_MPLY, KC_MUTE, KC_N, KC_M, KC_COMM,KC_
  * |  ▽  |  !  |  @  |  #  |  $  |  %  |                  |  ^  |  &  |  *  |  +  |  ▽  |  ▽  |
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
  * |  ▽  |  ~  |  |  |  (  |  )  |  _  |-------.  ,-------|  ▶  |  [{ | }]  | - _ | = + | F12 |
- * |-----+-----+-----+-----+-----+-----|  PREV |  | NEXT  |-----+-----+-----+-----+-----+-----|
+ * |-----+-----+-----+-----+-----+-----| Reset |  |   ▽   |-----+-----+-----+-----+-----+-----|
  * |  ▽  |  ▽  |  ▽  |  ▽  |  ▽  |  ▽  |-------|  |-------|  ▽  |  ▽  | <-  |  -> |  \  |  ▽  |
  * `-----------------------------------/       /   \      \-----------------------------------'
  *          |  ▽  |  ▽  |  ▽  |  ▽  | /   ▽   /     \  ▽   \ |  ▽  |  ▽  |  ▽  |  ▽  |
@@ -76,7 +79,7 @@ KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_MPLY, KC_MUTE, KC_N, KC_M, KC_COMM,KC_
 KC_PSCR,KC_F1,KC_F2,KC_F3,KC_F4,KC_F5,                      KC_F6,KC_F7,KC_F8,KC_F9,KC_F10,KC_F11,
 _______,KC_EXLM,KC_AT,KC_HASH,KC_DLR,KC_PERC,           KC_CIRC,KC_AMPR,KC_ASTR,KC_PPLS,_______, _______,
 _______,KC_TILD,KC_PIPE,KC_LPRN,KC_RPRN,KC_UNDS,      KC_EPIPE,KC_LBRC,KC_RBRC,KC_MINS,KC_EQL,KC_F12,
-_______,_______,_______,_______,_______,_______,KC_MPRV,  KC_MNXT,_______,_______,KC_LARR,KC_RARR,KC_BSLS,_______,
+_______,_______,_______,_______,_______,_______,QK_BOOT,  KC_MNXT,_______,_______,KC_LARR,KC_RARR,KC_BSLS,_______,
              _______,_______,_______,_______,_______,  _______,_______,_______,_______,_______),
 /* ARROWS 2
  * ,-----------------------------------.                  ,-----------------------------------.
@@ -85,7 +88,7 @@ _______,_______,_______,_______,_______,_______,KC_MPRV,  KC_MNXT,_______,______
  * |  ▽  | :q  | :w  | :e  |MENU |PRNTS|                  | PGU |Home |  ⬆  | End |     |  ▽  |
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
  * |  ▽  |     | :s/ |  {  |  }  |  %  |-------.  ,-------| PGD |  ←  |  ↓  |  →  |     |  ▽  |
- * |-----+-----+-----+-----+--=--+-----|  ▽    |  |    ▽  |-----+--=--+-----+-----+-----+-----|
+ * |-----+-----+-----+-----+--=--+-----|  PREV |  | NEXT  |-----+--=--+-----+-----+-----+-----|
  * |  ▽  |     |     |VCOPY| CR" |     |-------|  |-------|     |CTHom| <<  |  >> | Ins |  ▽  |
  * `-----------------------------------/       /   \      \-----------------------------------'
  *          |  ▽  |  ▽  |  ▽  |  ▽  | /   ▽   /     \  ▽   \ |  ▽  |  ▽  |  ▽  |  ▽  |
@@ -96,7 +99,7 @@ _______,_______,_______,_______,_______,_______,KC_MPRV,  KC_MNXT,_______,______
 KC_PSCR,KC_F1,KC_F2,KC_F3,KC_F4,KC_F5,                          KC_F6,KC_F7,KC_F8,KC_F9,KC_F10,KC_F11,
 _______,KC_VIMQ,KC_VIMW,KC_VIME,KC_APP,KC_PSCR,                 KC_PGUP,KC_HOME,KC_UP,KC_END,KC_NO,_______,
 _______,KC_NO,KC_VIMS,KC_LCBR,KC_RCBR,KC_PERC,            KC_PGDN,KC_LEFT,KC_DOWN,KC_RGHT,KC_NO,KC_F12,
-_______,_______,_______,KC_VCPY,KC_VIMV,KC_NO,_______,   _______,KC_NO,LCTL(KC_HOME),KC_LBIN,KC_RBIN,KC_INS,_______,
+_______,_______,_______,KC_VCPY,KC_VIMV,KC_NO,KC_MPRV,   KC_MNXT,KC_NO,LCTL(KC_HOME),KC_LBIN,KC_RBIN,KC_INS,_______,
              _______,_______,_______,_______,_______,   _______,_______,_______,_______,_______),
 /* MATH 3
  * ,-----------------------------------.                  ,-----------------------------------.
@@ -124,7 +127,7 @@ MO(4),KC_PERC,KC_CIRC,KC_LCBR,KC_RCBR,KC_PIPE,_______,  _______,KC_NO,KC_P1,KC_P
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
  * |Debug|     |     |     |     |     |                  |     |     |     |     |     |     |
  * |-----+-----+-----+-----+-----+-----|                  |-----+-----+-----+-----+-----+-----|
- * |     |     |     |     |     |     |-------.  ,-------|     |     |     |     |     |     |
+ * |Swap |     |     |     |     |     |-------.  ,-------|     |     |     |     |     |     |
  * |-----+-----+-----+-----+-----+-----|       |  |       |-----+-----+-----+-----+-----+-----|
  * |  ▽  |     |     |     |     |     |-------|  |-------|     |     |     |     |     |     |
  * `-----------------------------------/       /   \      \-----------------------------------'
@@ -135,7 +138,7 @@ MO(4),KC_PERC,KC_CIRC,KC_LCBR,KC_RCBR,KC_PIPE,_______,  _______,KC_NO,KC_P1,KC_P
 [LAYER_PROG] = LAYOUT(
 QK_BOOT,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
 DB_TOGG,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
-  KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
+KC_SWAP,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,              KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
 _______,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,  KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,
               KC_NO,KC_NO,KC_NO,KC_NO,KC_NO,  KC_NO,KC_NO,KC_NO,KC_NO,KC_NO)
 };
@@ -404,6 +407,33 @@ void keyboard_post_init_user(void) {
     transaction_register_rpc(USER_SYNC_C, user_sync_c_slave_handler);
 }
 
+bool is_left = true;
+bool is_left_configured = false;
+#include "matrix.h"
+void matrix_io_delay(void);
+
+static uint8_t peek_matrix_intersection(pin_t out, pin_t in) {
+    setPinInputHigh(B3);
+    setPinOutput(B5);
+    writePinLow(B5);
+    // It's almost unnecessary, but wait until it's down to low, just in case.
+    wait_us(1);
+    uint8_t pin_state = readPin(B3);
+    setPinInputHigh(B5);
+    matrix_io_delay(); // Wait for the pull-up to go HIGH.
+    return pin_state;
+}
+
+bool is_keyboard_left(void) {
+    if (!is_left_configured) {
+        is_left = peek_matrix_intersection(SPLIT_HAND_MATRIX_GRID);
+        is_left_configured = true;
+        return is_left;
+    } else {
+        return is_left;
+    }
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         squid_typing_typechar(keycode);
@@ -479,6 +509,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_RBIN: {
             if (record->event.pressed) {
                 SEND_STRING(">>");
+                return false;
+            }
+        } break;
+        case KC_SWAP: {
+            if (record->event.pressed) {
+                is_left = !is_left;
+                is_left_configured = true;
                 return false;
             }
         } break;
