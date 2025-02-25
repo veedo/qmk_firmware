@@ -23,10 +23,14 @@
 #include "keycodes.h"
 #include "oled_driver.h"
 #include "rgblight.h"
+#include "transactions.h"
 #include QMK_KEYBOARD_H
 #include "info_config.h"
 #include "quantum_keycodes.h"
 #include "progmem.h"
+
+void set_heatmap_led_colour(uint8_t pos);
+void clear_heatmap_led( void );
 
 #define INDICATOR_BRIGHTNESS 30
 
@@ -257,19 +261,90 @@ char layer_state_str[72];
 // Now define the array of layers. Later layers take precedence
 
 // Light on inner column and underglow
-const rgblight_segment_t PROGMEM layer_base_lights[] = RGBLIGHT_LAYER_SEGMENTS(
-    SET_INDICATORS(HSV_RED),SET_BACKLIGHT(HSV_RED),SET_THUMBS(HSV_RED));
+rgblight_segment_t layer_base_lights[] = RGBLIGHT_LAYER_SEGMENTS(
+    SET_INDICATORS(HSV_RED),SET_BACKLIGHT(HSV_RED),SET_THUMBS(HSV_RED),
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS);
 // Light on outer column and underglow
-const rgblight_segment_t PROGMEM layer_lower_lights[] = RGBLIGHT_LAYER_SEGMENTS(
-    SET_INDICATORS(HSV_TEAL),SET_BACKLIGHT(HSV_TEAL),SET_THUMBS(HSV_TEAL));
+rgblight_segment_t layer_lower_lights[] = RGBLIGHT_LAYER_SEGMENTS(
+    SET_INDICATORS(HSV_TEAL),SET_BACKLIGHT(HSV_TEAL),SET_THUMBS(HSV_TEAL),
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS);
 // Light on inner column and underglow
-const rgblight_segment_t PROGMEM layer_arrows_lights[] = RGBLIGHT_LAYER_SEGMENTS(
-    SET_INDICATORS(HSV_BLUE),SET_BACKLIGHT(HSV_BLUE),SET_THUMBS(HSV_BLUE));
+rgblight_segment_t layer_arrows_lights[] = RGBLIGHT_LAYER_SEGMENTS(
+    SET_INDICATORS(HSV_BLUE),SET_BACKLIGHT(HSV_BLUE),SET_THUMBS(HSV_BLUE),
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS);
 // Light on inner column and underglow
-const rgblight_segment_t PROGMEM layer_prog_lights[] = RGBLIGHT_LAYER_SEGMENTS(
-    SET_INDICATORS(HSV_TEAL),SET_BACKLIGHT(HSV_TEAL),SET_THUMBS(HSV_TEAL));
-const rgblight_segment_t PROGMEM layer_math_lights[] = RGBLIGHT_LAYER_SEGMENTS(
-    SET_INDICATORS(HSV_ORANGE),SET_BACKLIGHT(HSV_ORANGE),SET_THUMBS(HSV_ORANGE));
+rgblight_segment_t layer_prog_lights[] = RGBLIGHT_LAYER_SEGMENTS(
+    SET_INDICATORS(HSV_TEAL),SET_BACKLIGHT(HSV_TEAL),SET_THUMBS(HSV_TEAL),
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS);
+rgblight_segment_t layer_math_lights[] = RGBLIGHT_LAYER_SEGMENTS(
+    SET_INDICATORS(HSV_ORANGE),SET_BACKLIGHT(HSV_ORANGE),SET_THUMBS(HSV_ORANGE),
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,
+    RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS,RGBLIGHT_END_SEGMENTS);
+
+#define HEATMAP_NUM_COLOURS (8)
+ static const uint8_t heatmap_led_colours[HEATMAP_NUM_COLOURS][3] = {
+     {HSV_RED},
+     {HSV_CORAL},
+     {HSV_ORANGE},
+     {HSV_GREEN},
+     {HSV_CYAN},
+     {HSV_BLUE},
+     {HSV_PURPLE},
+     {HSV_MAGENTA},
+ };
+
+volatile uint8_t heatmap_led_idx = 0;
+void set_heatmap_led_colour_value(uint8_t offset, uint8_t pos, uint8_t h, uint8_t s, uint8_t v) {
+    if (offset >= HEATMAP_NUM_COLOURS) return;
+    layer_base_lights[14+offset] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_lower_lights[14+offset] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_arrows_lights[14+offset] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_prog_lights[14+offset] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_math_lights[14+offset] = (rgblight_segment_t){pos,1,h,s,v};
+}
+
+void clear_heatmap_led_at(uint8_t offset) {
+    if (offset >= HEATMAP_NUM_COLOURS) return;
+    if (is_keyboard_master()) {
+        transaction_rpc_send(USER_SYNC_B, 1, &offset);
+    }
+    layer_base_lights[14+offset] = layer_base_lights[0];
+    layer_lower_lights[14+offset] = layer_lower_lights[0];
+    layer_arrows_lights[14+offset] = layer_arrows_lights[0];
+    layer_prog_lights[14+offset] = layer_prog_lights[0];
+    layer_math_lights[14+offset] = layer_math_lights[0];
+}
+
+void clear_heatmap_led( void ) {
+    uint8_t hmled_idx = heatmap_led_idx;
+    for (uint8_t i = 0; i < HEATMAP_NUM_COLOURS; ++i) {
+        uint8_t offset = ((uint8_t)(hmled_idx+i)) % HEATMAP_NUM_COLOURS;
+        if ((layer_base_lights[14+offset].index != layer_base_lights[0].index) && (layer_base_lights[14+offset].index != RGBLIGHT_END_SEGMENT_INDEX)) {
+            clear_heatmap_led_at(offset);
+            return;
+        }
+    }
+}
+
+void set_heatmap_led_colour(uint8_t pos) {
+    if (is_keyboard_master()) {
+        transaction_rpc_send(USER_SYNC_A, 1, &pos);
+    }
+    uint8_t hmled_idx = heatmap_led_idx;
+    uint8_t h = heatmap_led_colours[hmled_idx][0];
+    uint8_t s = heatmap_led_colours[hmled_idx][1];
+    uint8_t v = heatmap_led_colours[hmled_idx][2];
+    layer_base_lights[14+hmled_idx] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_lower_lights[14+hmled_idx] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_arrows_lights[14+hmled_idx] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_prog_lights[14+hmled_idx] = (rgblight_segment_t){pos,1,h,s,v};
+    layer_math_lights[14+hmled_idx] = (rgblight_segment_t){pos,1,h,s,v};
+    heatmap_led_idx = (hmled_idx + 1) % HEATMAP_NUM_COLOURS;
+}
 
 const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
     layer_base_lights,
@@ -293,12 +368,31 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return update_tri_layer_state(state, LAYER_LOWER, LAYER_ARROWS, LAYER_MATH);
 }
 
+void user_sync_a_slave_handler(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
+    set_heatmap_led_colour(*((uint8_t*)in_data));
+}
+
+void user_sync_b_slave_handler(uint8_t in_buflen, const void* in_data, uint8_t out_buflen, void* out_data) {
+    clear_heatmap_led_at(*((uint8_t*)in_data));
+}
+
 void keyboard_post_init_user(void) {
     // Enable the LED layers
     rgblight_layers = my_rgb_layers;
     //rgblight_mode_noeeprom(RGBLIGHT_MODE_RAINBOW_MOOD);// haven't found a way to set this in a more useful way
+    transaction_register_rpc(USER_SYNC_A, user_sync_a_slave_handler);
+    transaction_register_rpc(USER_SYNC_B, user_sync_b_slave_handler);
 }
 #endif
+
+static uint32_t stale_timer = 0;
+void housekeeping_task_user(void) {
+    if (!is_keyboard_master()) return;
+    if (timer_elapsed32(stale_timer) > 1000) {
+        stale_timer = timer_read32();
+        clear_heatmap_led();
+    }
+}
 
 #ifdef OLED_ENABLE
 
@@ -367,7 +461,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         } break;
         case KC_VIMQ: {
             if (record->event.pressed) {
-                rgblight_sethsv_at(HSV_RED, LEDPOS[KC_Q]);
+                set_heatmap_led_colour(LEDPOS[KC_Q]);
                 tap_code16(KC_ESC);
                 SEND_STRING(":q");
                 return false;
@@ -375,7 +469,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         } break;
         case KC_VIMW: {
             if (record->event.pressed) {
-                rgblight_sethsv_at(HSV_RED, LEDPOS[KC_W]);
+                set_heatmap_led_colour(LEDPOS[KC_W]);
                 tap_code16(KC_ESC);
                 SEND_STRING(":w");
                 return false;
@@ -383,7 +477,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         } break;
         case KC_VIME: {
             if (record->event.pressed) {
-                rgblight_sethsv_at(HSV_RED, LEDPOS[KC_E]);
+                set_heatmap_led_colour(LEDPOS[KC_E]);
                 tap_code16(KC_ESC);
                 SEND_STRING(":e");
                 return false;
@@ -391,7 +485,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         } break;
         case KC_VIMS: {
             if (record->event.pressed) {
-                rgblight_sethsv_at(HSV_RED, LEDPOS[KC_S]);
+                set_heatmap_led_colour(LEDPOS[KC_S]);
                 SEND_STRING(":s/");
                 return false;
             }
@@ -448,8 +542,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
         } break;
         default: {
-            if ((keycode < 128) && (LEDPOS[keycode] != 0)) {
-                //sethsv(HSV_RED, LEDPOS[keycode]);
+            if (record->event.pressed) {
+                if ((keycode < 128) && (LEDPOS[keycode] != 0)) {
+                    set_heatmap_led_colour(LEDPOS[keycode]);
+                }
+            } else {
             }
         } break;
     }
